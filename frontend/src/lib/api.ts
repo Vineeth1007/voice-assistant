@@ -1,7 +1,7 @@
 // frontend/lib/api.ts
 export type AssistantReply = { text: string; audioUrl?: string };
 
-const base = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+const base = ""; // same-origin
 
 export async function submitTranscript(text: string): Promise<AssistantReply> {
   const res = await fetch(`${base}/transcribe`, {
