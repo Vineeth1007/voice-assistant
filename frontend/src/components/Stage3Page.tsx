@@ -21,8 +21,8 @@ import {
   Pause,
   VolumeX,
 } from "lucide-react";
-import { submitTranscript, type AssistantReply, uploadAudio } from "@/lib/api";
-import { getReply } from "@/lib/api";
+
+import { getReply, uploadAudio, type AssistantReply } from "@/lib/api";
 // Toggle this to switch to server Whisper ASR (MediaRecorder + /api/transcribe)
 const USE_SERVER_ASR = true;
 
@@ -35,6 +35,7 @@ const COLORS = [
   "text-slate-200",
 ];
 const SIZES = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl"];
+// export type AssistantReply = { text: string; audioUrl?: string };
 
 export default function Stage3Page() {
   const [isListening, setIsListening] = useState(false);
@@ -176,7 +177,7 @@ export default function Stage3Page() {
     if (!text) return;
     setReply(null);
     try {
-      const resp = await submitTranscript(text);
+      const resp = await getReply(text);
       setReply(resp);
       if (resp.audioUrl && audioRef.current) {
         audioRef.current.src = resp.audioUrl;
