@@ -349,15 +349,24 @@ export default function Stage3Page() {
           <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-black/30 px-3 py-1 text-xs text-slate-200 ring-1 ring-white/10">
             <Volume2 className="h-3.5 w-3.5" /> Live transcript
           </div>
-          <div className="min-h-[220px]">
-            {transcript ? (
-              <div className="leading-snug">{enhancedWords}</div>
-            ) : (
-              <p className="text-slate-400">
-                Press the mic and start speaking… your words will appear here in
-                vivid rhythm.
-              </p>
-            )}
+
+          {/* NEW: editable textarea + visual preview */}
+          <div className="space-y-4">
+            <textarea
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              placeholder="Type or dictate your message…"
+              className="w-full min-h-[120px] rounded-xl bg-black/30 p-3 text-slate-100 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-violet-400/70"
+            />
+            <div className="min-h-[80px]">
+              {transcript ? (
+                <div className="leading-snug">{enhancedWords}</div>
+              ) : (
+                <p className="text-slate-400">
+                  Press the mic or type above—your styled preview appears here.
+                </p>
+              )}
+            </div>
           </div>
           {reply && (
             <div className="mt-6 space-y-3 rounded-2xl bg-black/40 p-4 ring-1 ring-white/10">
@@ -515,18 +524,22 @@ function PresetShowcase() {
       name: "Classic",
       grad: "from-violet-400 via-fuchsia-300 to-indigo-300",
       sample: "Minimal input. Maximum vibe.",
+      desc: "Balanced tone for everyday replies—friendly, crisp, reliable.",
     },
     {
       name: "Emerald",
       grad: "from-emerald-300 via-teal-300 to-cyan-300",
       sample: "Crisp. Calm. Confident.",
+      desc: "Polished and composed—great for product updates and team notes.",
     },
     {
       name: "Crimson",
       grad: "from-rose-300 via-pink-300 to-orange-300",
       sample: "Bold. Warm. Magnetic.",
+      desc: "High-energy presence—perfect for promos, hooks, and shorts.",
     },
   ];
+
   return (
     <div className="grid gap-5 md:grid-cols-3">
       {presets.map((p, i) => (
@@ -544,6 +557,7 @@ function PresetShowcase() {
             {p.name}
           </div>
           <p className="mt-3 text-slate-200">{p.sample}</p>
+          <p className="mt-1 text-sm text-slate-400">{p.desc}</p>
           <div
             className={`mt-4 h-14 w-full rounded-xl bg-gradient-to-r ${p.grad}`}
           />
@@ -588,6 +602,8 @@ function UseCases() {
 }
 
 function Pricing() {
+  const [selected, setSelected] = useState<number>(1); // 0: Starter, 1: Pro, 2: Studio
+
   const tiers = [
     {
       name: "Starter",
@@ -605,46 +621,73 @@ function Pricing() {
       bullets: ["Brand kit", "Embeddable SDK", "Priority support"],
     },
   ];
+
   return (
-    <div className="grid gap-5 md:grid-cols-3">
-      {tiers.map((t, i) => (
-        <motion.div
-          key={t.name}
-          initial={{ opacity: 0, y: 8 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: i * 0.06 }}
-          className={`rounded-3xl border border-white/10 p-5 ${
-            i === 1 ? "bg-white text-black" : "bg-white/5 text-white"
-          }`}
-        >
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-xl font-semibold">{t.name}</h3>
-            {i === 1 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-black/10 px-2 py-0.5 text-xs font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Popular
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-3xl font-bold">{t.price}</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {t.bullets.map((b) => (
-              <li key={b} className="flex items-center gap-2">
-                •<span>{b}</span>
-              </li>
-            ))}
-          </ul>
+    <div>
+      {/* Tabs */}
+      <div className="mb-5 inline-flex rounded-2xl bg-white/5 p-1 ring-1 ring-white/10">
+        {tiers.map((t, i) => (
           <button
-            className={`mt-5 w-full rounded-xl px-4 py-2 text-sm font-semibold ring-1 ${
-              i === 1
-                ? "ring-black/20 bg-black text-white"
-                : "ring-white/20 bg-white/10 hover:bg-white/15"
-            }`}
+            key={t.name}
+            onClick={() => setSelected(i)}
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition
+              ${
+                selected === i
+                  ? "bg-white text-black"
+                  : "text-white/80 hover:text-white"
+              }
+            `}
           >
-            Get started
+            {t.name}
           </button>
-        </motion.div>
-      ))}
+        ))}
+      </div>
+
+      {/* Cards */}
+      <div className="grid gap-5 md:grid-cols-3">
+        {tiers.map((t, i) => {
+          const isActive = selected === i;
+          return (
+            <motion.div
+              key={t.name}
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.06 }}
+              className={`rounded-3xl border border-white/10 p-5 ${
+                isActive ? "bg-white text-black" : "bg-white/5 text-white"
+              }`}
+            >
+              <div className="flex items-baseline justify-between">
+                <h3 className="text-xl font-semibold">{t.name}</h3>
+                {isActive && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-black/10 px-2 py-0.5 text-xs font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Selected
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-3xl font-bold">{t.price}</p>
+              <ul className="mt-4 space-y-2 text-sm">
+                {t.bullets.map((b) => (
+                  <li key={b} className="flex items-center gap-2">
+                    •<span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => setSelected(i)}
+                className={`mt-5 w-full rounded-xl px-4 py-2 text-sm font-semibold ring-1 ${
+                  isActive
+                    ? "ring-black/20 bg-black text-white"
+                    : "ring-white/20 bg-white/10 hover:bg-white/15"
+                }`}
+              >
+                Get started
+              </button>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -10,8 +10,7 @@ import os
 import requests
 
 app = FastAPI()
-from dotenv import load_dotenv
-load_dotenv()  # this will pull in values from .env
+
 
 origins = ["http://localhost:5173", "http://localhost:3000"]
 app.add_middleware(
@@ -48,6 +47,8 @@ AUDIO_DIR = "audio"
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
 import requests
+from dotenv import load_dotenv
+load_dotenv()  # this will pull in values from .env
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -57,38 +58,47 @@ async def reply(payload: dict):
     user_text = payload.get("text", "")
     if not user_text:
         return {"text": "I didn’t hear anything.", "audioUrl": None}
+
+    response_text = "Sorry, I couldn’t generate a reply."  # default fallback
+
+    try:
+        r = requests.post(
+            OPENROUTER_URL,
+            headers = {
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+
+            json={
+                "model": "deepseek/deepseek-chat-v3.1:free",
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant."},
+                    {"role": "user", "content": user_text},
+                ],
+            },
+            timeout=30,
+        )
+        r.raise_for_status()
+        data = r.json()
+
+        # Try to extract the model’s reply
+        if "choices" in data and len(data["choices"]) > 0:
+            message = data["choices"][0].get("message", {})
+            response_text = message.get("content", response_text)
+
+    except Exception as e:
+        # Log for debugging (so you can see why it failed)
+        print("OpenRouter error:", e, getattr(r, "text", ""))
+
+    # 🔊 Convert reply to speech
     filename = f"{uuid.uuid4()}.mp3"
     filepath = os.path.join(AUDIO_DIR, filename)
     gTTS(response_text).save(filepath)
 
-    PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://localhost:8000")
     return {
         "text": response_text,
-        "audioUrl": f"{PUBLIC_BASE_URL}/audio/{filename}",
+        "audioUrl": f"http://localhost:8000/audio/{filename}",
     }
-    # 🔥 Call OpenRouter
-    r = requests.post(
-        OPENROUTER_URL,
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": "deepseek/deepseek-chat-v3.1:free",   # or any other model you want from OpenRouter
-            "messages": [
-                {"role": "system", "content": "You are a helpful AI assistant."},
-                {"role": "user", "content": user_text},
-            ],
-        },
-    )
-    data = r.json()
-    response_text = (
-        data.get("choices", [{}])[0]
-        .get("message", {})
-        .get("content", "Sorry, I couldn’t generate a reply.")
-    )
-
-    # 🔊 Convert reply to speech
 
 
 @app.get("/audio/{filename}")
