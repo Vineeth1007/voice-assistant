@@ -1,8 +1,20 @@
+# Python
 venv/
+.venv/
 __pycache__/
 *.pyc
+
+# Node / Next.js
+node_modules/
+.next/
+*.tsbuildinfo
+
+# Environment files: keep the .env.example templates, ignore real secrets
 .env
-.env.example
-.env.local
-node_modules
-.next
+.env.*
+!.env.example
+
+# Generated text-to-speech replies written by the FastAPI backend at runtime
+# (the folder depends on where uvicorn is started from)
+backend/audio/
+backend/app/audio/
